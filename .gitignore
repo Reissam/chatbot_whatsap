@@ -1,0 +1,13 @@
+# Dependências
+node_modules/
+package-lock.json
+
+# Cache do WhatsApp Web
+.wwebjs_cache/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

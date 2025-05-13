@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        #qrcode {
+            margin: 20px auto;
+            max-width: 300px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .connected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .disconnected {
+            background-color: #f44336;
+            color: white;
+        }
+        #logs {
+            text-align: left;
+            background: #f0f0f0;
+            border-radius: 5px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 20px auto;
+            width: 90%;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WhatsApp Bot</h1>
+    <div id="status" class="status disconnected">Aguardando ação...</div>
+    <button id="start">Gerar QR Code</button>
+    <button id="disconnect" disabled>Desconectar</button>
+    <div id="qrcode"></div>
+    <div id="logs"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const statusDiv = document.getElementById('status');
+        const qrcodeDiv = document.getElementById('qrcode');
+        const logsDiv = document.getElementById('logs');
+        const startBtn = document.getElementById('start');
+        const disconnectBtn = document.getElementById('disconnect');
+
+        startBtn.onclick = () => {
+            socket.emit('start');
+            statusDiv.textContent = 'Aguardando QR Code...';
+            statusDiv.className = 'status disconnected';
+            startBtn.disabled = true;
+            disconnectBtn.disabled = false;
+        };
+
+        disconnectBtn.onclick = () => {
+            socket.emit('disconnect-bot');
+            statusDiv.textContent = 'Desconectando...';
+            statusDiv.className = 'status disconnected';
+            startBtn.disabled = false;
+            disconnectBtn.disabled = true;
+            qrcodeDiv.innerHTML = '';
+        };
+
+        socket.on('qr', (qr) => {
+            qrcodeDiv.innerHTML = `<img src="${qr}" alt="QR Code">`;
+            statusDiv.textContent = 'Escaneie o QR Code com seu WhatsApp';
+            statusDiv.className = 'status disconnected';
+            disconnectBtn.disabled = false;
+        });
+
+        socket.on('ready', (message) => {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status connected';
+            qrcodeDiv.innerHTML = '';
+            disconnectBtn.disabled = false;
+        });
+
+        socket.on('disconnected', (message) => {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status disconnected';
+            qrcodeDiv.innerHTML = '';
+            startBtn.disabled = false;
+            disconnectBtn.disabled = true;
+        });
+
+        socket.on('log', (msg) => {
+            const time = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `<div>[${time}] ${msg}</div>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        });
+    </script>
+</body>
+</html>
